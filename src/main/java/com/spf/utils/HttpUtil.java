@@ -40,11 +40,6 @@ public abstract class HttpUtil {
 	protected static final Logger logger = LogManager.getLogger(HttpUtil.class);
 
 	static {
-		List<Header> headers = new ArrayList<>();
-		headers.add(new BasicHeader("Auth", "WVNAMDIz"));
-		headers.add(new BasicHeader("Connection", "keep-alive"));
-		// headers.add(new BasicHeader("Accept-Encoding", "gzip, deflate, sdch"));
-
 		config = RequestConfig.custom() //
 				// .setProxy(new HttpHost(ip, port)) //
 				.setSocketTimeout(30000) // 数据传输过程中数据包之间间隔的最大时间
