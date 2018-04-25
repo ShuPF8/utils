@@ -1,29 +1,37 @@
 package com.spf.utils.es;
 
 import com.alibaba.fastjson.JSONObject;
-import lombok.extern.slf4j.XSlf4j;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.elasticsearch.action.admin.indices.create.CreateIndexResponse;
 import org.elasticsearch.action.admin.indices.delete.DeleteIndexResponse;
 import org.elasticsearch.action.admin.indices.exists.indices.IndicesExistsResponse;
-import org.elasticsearch.action.admin.indices.mapping.put.PutMappingRequestBuilder;
 import org.elasticsearch.action.admin.indices.mapping.put.PutMappingResponse;
+import org.elasticsearch.action.delete.DeleteResponse;
 import org.elasticsearch.action.get.GetResponse;
 import org.elasticsearch.action.index.IndexResponse;
+import org.elasticsearch.action.search.SearchResponse;
+import org.elasticsearch.action.search.SearchType;
+import org.elasticsearch.action.update.UpdateRequest;
+import org.elasticsearch.action.update.UpdateResponse;
 import org.elasticsearch.client.IndicesAdminClient;
 import org.elasticsearch.client.transport.TransportClient;
 import org.elasticsearch.common.settings.Settings;
 import org.elasticsearch.common.transport.TransportAddress;
 import org.elasticsearch.common.xcontent.XContentBuilder;
 import org.elasticsearch.common.xcontent.XContentType;
+import org.elasticsearch.index.query.BoolQueryBuilder;
+import org.elasticsearch.index.query.QueryBuilder;
+import org.elasticsearch.index.query.QueryBuilders;
+import org.elasticsearch.search.SearchHit;
 import org.elasticsearch.transport.client.PreBuiltTransportClient;
 
 import java.io.IOException;
 import java.net.InetAddress;
 import java.net.UnknownHostException;
-import java.util.Date;
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 import static org.elasticsearch.common.xcontent.XContentFactory.jsonBuilder;
@@ -38,10 +46,7 @@ public class ElasticSearchUtil {
 
     private Logger logger = LogManager.getLogger(ElasticSearchUtil.class);
 
-    public static final int SEARCH_FROM = 0; // 起始位置
-    public static final int SEARCH_SIZE = 30; // 搜索记录数
     private static String esIp = "192.168.232.128"; // es服务器ip地址
-    private static String esPort = "9200"; // es服务端口
     private static String esClusterName = "myCluster"; // es cluster_name
 
     /**
@@ -94,14 +99,26 @@ public class ElasticSearchUtil {
         }
 
         Map<String, Object> map = new HashMap<>();
-        map.put("postdate","2018-04-20 17:41:55");
-        map.put("title","斗罗大陆");
-        map.put("content","很牛逼");
-        map.put("url","http://iyiqi.com");
-        //String id = searchUtil.insert("index1","blog",JSONObject.toJSONString(map));
-        //System.out.println("id ------ " + id);
-        String data = searchUtil.queryToId("index1","blog","09Nu4mIBGA5fd7IVvDSN");
-        System.out.println(data);
+        //map.put("postdate","2018-04-24 16:41:55");
+        //map.put("title","斗罗大陆");
+        map.put("content","好");
+        //map.put("url","http://youku.com");
+//        String id = searchUtil.insert("index1","blog",JSONObject.toJSONString(map));
+//        System.out.println("id ------ " + id);
+        //String data = searchUtil.queryToId("index1","blog","bKeP9WIB7Fk83aqAeMQI");
+        //boolean data = searchUtil.updateToId("index1","blog","bKeP9WIB7Fk83aqAeMQI",map);
+//        boolean data = searchUtil.deleteToId("index1","blog","bKeP9WIB7Fk83aqAeMQI");
+//        System.out.println(data);
+//        boolean flag = searchUtil.deleteToId("index1","blog","b6eQ9mIB7Fk83aqALsS5");
+//        System.out.println(flag); searchUtil.mustQuery(map,true);
+        QueryBuilder queryBuilder = searchUtil.prefixQuery("content","好");
+        queryBuilder = QueryBuilders.boolQuery()
+                //.must(QueryBuilders.matchPhraseQuery("title","斗破苍穹"))
+                //.must(QueryBuilders.matchQuery("content","好"))
+                .should(QueryBuilders.matchQuery("title","大陆"));
+        List<Map<String, Object>> list = searchUtil.query("index1","blog", queryBuilder,1, 10);
+        System.out.println(JSONObject.toJSONString(list));
+        searchUtil.close();
     }
 
 
@@ -246,6 +263,8 @@ public class ElasticSearchUtil {
         return response == null ? null : response.getId();
     }
 
+    /**************************************************** 查询方法 **********************************************************************/
+
     /**
      *  根据索引ID 获取数据
      * @param indexName 索引名
@@ -262,6 +281,172 @@ public class ElasticSearchUtil {
         GetResponse response = this.client.prepareGet(indexName,typeName,id).get();
 
         return response == null ? null : JSONObject.toJSONString(response.getSource());
+    }
+
+    /**
+     * 组合查询
+     *      * must(QueryBuilders) :   AND
+     *      * mustNot(QueryBuilders): NOT
+     *      * should:                  : OR
+     *
+     * @param indexName 索引名
+     * @param typeName 索引类型
+     * @param queryBuilder QueryBuilder
+     * @param pageNo 起始页
+     * @param size 每页显示条数
+     * @return list
+     */
+    public List<Map<String, Object>> query(String indexName, String typeName, QueryBuilder queryBuilder, int pageNo, int size) {
+        if (!isExists(indexName)) { //索引不存在
+            logger.info("esIp:"+esIp+", cluster.name:"+esClusterName+" setMapping Fail ["+indexName+" 索引不存在]");
+            return null;
+        }
+
+        int startIndex = pageNo > 0 ? ((pageNo - 1) * size) : 1;
+
+        SearchResponse response = null;
+        response = this.client.prepareSearch(indexName)
+                                .setTypes(typeName)
+                                .setSearchType(SearchType.QUERY_THEN_FETCH)
+                                .setQuery(queryBuilder)
+                                .setFrom(startIndex)
+                                .setSize(size > 0 ? size : 10)
+                                .get();
+
+        if (response == null) {
+            return null;
+        }
+
+        List<Map<String, Object>> list = new ArrayList<>();
+        for (SearchHit hit : response.getHits()) {
+            list.add(hit.getSourceAsMap());
+        }
+
+        return list;
+    }
+
+    /**
+     * ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+     * prefix query
+     * 包含与查询相匹配的文档指定的前缀。
+     * ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+     */
+    protected QueryBuilder prefixQuery(String name, String content) {
+        return QueryBuilders.prefixQuery(name, content);
+    }
+
+    /**
+     *  所有参数必须匹配的模糊查询，相当于 and 的模糊查询
+     * @param params 参数
+     * @param isPhrase 是否是文本短语匹配
+     * @return
+     */
+    public QueryBuilder mustQuery(Map<String, Object> params, boolean isPhrase) {
+        BoolQueryBuilder queryBuilder = QueryBuilders.boolQuery();
+        if (params != null) {
+            for (String key : params.keySet()) {
+                if (isPhrase) {
+                    queryBuilder.must(matchPhraseQuery(key,params.get(key)));
+                } else {
+                    queryBuilder.must(matchQuery(key,params.get(key)));
+                }
+            }
+        }
+        return queryBuilder;
+    }
+
+    /**
+     * ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+     * match query 单个匹配
+     * 根据文本分词匹配
+     * ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+     */
+    protected QueryBuilder matchQuery(String name, Object text) {
+        return QueryBuilders.matchQuery(name,text);
+    }
+
+    /**
+     * ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+     * match query 单个匹配
+     * 根据文本短语匹配
+     * ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+     */
+    protected QueryBuilder matchPhraseQuery(String name, Object text) {
+        return QueryBuilders.matchPhraseQuery(name,text);
+    }
+
+    /**
+     * ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+     * 匹配多个字段包含的数据 or
+     * ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+     */
+    protected QueryBuilder multiMatchQuery(String text, String ... fiels) {
+        return QueryBuilders.multiMatchQuery(text,fiels);             // 设置最小数量的匹配提供了条件。默认为1。
+    }
+
+    protected QueryBuilder termsQuery(String name, Object text) {
+        return QueryBuilders.termsQuery(name,text);
+    }
+    /**************************************************** 修改方法 **********************************************************************/
+
+    /**
+     *  根据索引 ID 修改数据
+     * @param indexName 索引名
+     * @param typeName 索引类型
+     * @param id 索引id
+     * @param data 数据
+     * @return 布尔值
+     */
+    public boolean updateToId(String indexName, String typeName, String id,Map<String, Object> data) {
+        if (!isExists(indexName)) { //索引不存在
+            logger.info("esIp:"+esIp+", cluster.name:"+esClusterName+" setMapping Fail ["+indexName+" 索引不存在]");
+            return false;
+        }
+
+        UpdateRequest updateRequest = new UpdateRequest(indexName,typeName,id);
+
+        updateRequest.doc(data);
+
+        UpdateResponse response = null;
+        try {
+            response = this.client.update(updateRequest).get();
+            if (response == null) {
+                return false;
+            }
+        } catch (Exception e) {
+            logger.error("{},{},id:{},修改数据失败; data:{}, error:",indexName,typeName,id,JSONObject.toJSON(data), e);
+            e.printStackTrace();
+        }
+        return response.status().getStatus() == 200 ? true : false;
+    }
+
+    /**************************************************** 删除方法 **********************************************************************/
+
+    /**
+     *  根据索引数据id 删除单条数据
+     * @param indexName 索引名
+     * @param typeName 索引类型
+     * @param id 索引数据id
+     * @return 布尔值
+     */
+    public boolean deleteToId(String indexName, String typeName, String id) {
+        if (!isExists(indexName)) { //索引不存在
+            logger.info("esIp:"+esIp+", cluster.name:"+esClusterName+" setMapping Fail ["+indexName+" 索引不存在]");
+            return false;
+        }
+
+        DeleteResponse response = null;
+        try {
+            response = this.client.prepareDelete(indexName,typeName,id).get();
+            if (response == null) {
+                return false;
+            }
+        } catch (Exception e) {
+            logger.error("{},{},id:{},删除数据失败; error:",indexName,typeName,id, e);
+            e.printStackTrace();
+        }
+
+        return response.status().getStatus() == 200 ? true : false;
     }
 
     /**
