@@ -111,11 +111,14 @@ public class ElasticSearchUtil {
 //        System.out.println(data);
 //        boolean flag = searchUtil.deleteToId("index1","blog","b6eQ9mIB7Fk83aqALsS5");
 //        System.out.println(flag); searchUtil.mustQuery(map,true);
-        QueryBuilder queryBuilder = searchUtil.prefixQuery("content","好");
+        QueryBuilder queryBuilder = null;//QueryBuilders.termsQuery("content","好","很");// searchUtil.prefixQuery("content","好");
         queryBuilder = QueryBuilders.boolQuery()
-                //.must(QueryBuilders.matchPhraseQuery("title","斗破苍穹"))
-                //.must(QueryBuilders.matchQuery("content","好"))
-                .should(QueryBuilders.matchQuery("title","大陆"));
+                //.must(QueryBuilders.termsQuery("content","好"))
+                //.mustNot(QueryBuilders.matchPhraseQuery("title","斗破苍穹"));
+//                .should(QueryBuilders.matchPhraseQuery("title","大陆"))
+//                .must(QueryBuilders.matchPhraseQuery("content","好"))
+//                .should(QueryBuilders.matchPhraseQuery("title","斗破苍穹"))
+        ;
         List<Map<String, Object>> list = searchUtil.query("index1","blog", queryBuilder,1, 10);
         System.out.println(JSONObject.toJSONString(list));
         searchUtil.close();
@@ -304,14 +307,13 @@ public class ElasticSearchUtil {
 
         int startIndex = pageNo > 0 ? ((pageNo - 1) * size) : 1;
 
-        SearchResponse response = null;
-        response = this.client.prepareSearch(indexName)
-                                .setTypes(typeName)
-                                .setSearchType(SearchType.QUERY_THEN_FETCH)
-                                .setQuery(queryBuilder)
-                                .setFrom(startIndex)
-                                .setSize(size > 0 ? size : 10)
-                                .get();
+        SearchResponse response = this.client.prepareSearch(indexName)
+                                        .setTypes(typeName)
+                                        .setSearchType(SearchType.QUERY_THEN_FETCH)
+                                        .setQuery(queryBuilder)
+                                        .setFrom(startIndex)
+                                        .setSize(size > 0 ? size : 10)
+                                        .get();
 
         if (response == null) {
             return null;
@@ -384,9 +386,6 @@ public class ElasticSearchUtil {
         return QueryBuilders.multiMatchQuery(text,fiels);             // 设置最小数量的匹配提供了条件。默认为1。
     }
 
-    protected QueryBuilder termsQuery(String name, Object text) {
-        return QueryBuilders.termsQuery(name,text);
-    }
     /**************************************************** 修改方法 **********************************************************************/
 
     /**
@@ -448,6 +447,10 @@ public class ElasticSearchUtil {
 
         return response.status().getStatus() == 200 ? true : false;
     }
+
+    /************************************************************* DSL 语法封装 ***************************************************************************/
+
+
 
     /**
      * 关闭连接
