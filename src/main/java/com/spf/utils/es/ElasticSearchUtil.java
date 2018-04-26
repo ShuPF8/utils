@@ -1,6 +1,7 @@
 package com.spf.utils.es;
 
 import com.alibaba.fastjson.JSONObject;
+import lombok.Data;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.elasticsearch.action.admin.indices.create.CreateIndexResponse;
@@ -42,6 +43,7 @@ import static org.elasticsearch.common.xcontent.XContentFactory.jsonBuilder;
  * @date 2018-04-20 10:08
  */
 
+@Data
 public class ElasticSearchUtil {
 
     private Logger logger = LogManager.getLogger(ElasticSearchUtil.class);
