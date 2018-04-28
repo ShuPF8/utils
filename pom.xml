@@ -8,22 +8,21 @@
     <artifactId>utils</artifactId>
     <version>1.0-SNAPSHOT</version>
 
-    <!--<repositories>-->
-        <!--<repository>-->
-            <!--<id>elastic-lucene-snapshots</id>-->
-            <!--<name>Elastic Lucene Snapshots</name>-->
-            <!--<url>http://s3.amazonaws.com/download.elasticsearch.org/lucenesnapshots/00142c9</url>-->
-            <!--<releases><enabled>true</enabled></releases>-->
-            <!--<snapshots><enabled>false</enabled></snapshots>-->
-        <!--</repository>-->
-    <!--</repositories>-->
+    <repositories>
+        <repository>
+            <id>elastic-lucene-snapshots</id>
+            <name>Elastic Lucene Snapshots</name>
+            <url>http://s3.amazonaws.com/download.elasticsearch.org/lucenesnapshots/00142c9</url>
+            <releases><enabled>true</enabled></releases>
+            <snapshots><enabled>false</enabled></snapshots>
+        </repository>
+    </repositories>
 
     <dependencies>
         <dependency>
             <groupId>org.projectlombok</groupId>
             <artifactId>lombok</artifactId>
             <version>1.16.8</version>
-            <scope>provided</scope>
         </dependency>
 
         <dependency>

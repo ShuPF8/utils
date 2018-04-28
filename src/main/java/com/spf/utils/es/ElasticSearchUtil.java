@@ -141,6 +141,13 @@ public class ElasticSearchUtil {
         return instance;
     }
 
+    public ElasticSearchUtil init (String ip, String clusterName){
+        esIp = ip;
+        esClusterName = clusterName;
+        getClient();
+        return instance;
+    }
+
     /**
      * 连接集群
      * @return TransportClient 连接
