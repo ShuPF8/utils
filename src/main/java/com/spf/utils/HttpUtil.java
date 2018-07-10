@@ -14,6 +14,8 @@ import org.apache.http.conn.ssl.SSLConnectionSocketFactory;
 import org.apache.http.conn.ssl.TrustSelfSignedStrategy;
 import org.apache.http.entity.ContentType;
 import org.apache.http.entity.StringEntity;
+import org.apache.http.entity.mime.MultipartEntityBuilder;
+import org.apache.http.entity.mime.content.InputStreamBody;
 import org.apache.http.impl.client.HttpClientBuilder;
 import org.apache.http.impl.conn.PoolingHttpClientConnectionManager;
 import org.apache.http.message.BasicNameValuePair;
@@ -22,8 +24,13 @@ import org.apache.http.util.EntityUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
+import javax.imageio.ImageIO;
+import java.awt.image.BufferedImage;
+import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
+import java.io.IOException;
 import java.io.InputStream;
+import java.net.URL;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -214,6 +221,37 @@ public abstract class HttpUtil {
 		}
 
 		return data;
+	}
+
+	/**
+	 *  图片上传
+	 * @param client client
+	 * @param httpPost post
+	 * @param fileUrl 图片文件路径
+	 * @param logger 日志
+	 * @return object
+	 */
+	public static Object upLoadFile(HttpClient client,HttpPost httpPost, String fileUrl, Logger logger){
+		String ret = null;
+		//上传文件设置
+		MultipartEntityBuilder multipartEntityBuilder = MultipartEntityBuilder.create();
+		BufferedImage image = null;
+		try {
+			image = ImageIO.read(new URL(fileUrl));
+			ByteArrayOutputStream os = new ByteArrayOutputStream();
+			ImageIO.write(image, "jpg", os);
+			InputStream is = new ByteArrayInputStream(os.toByteArray());
+
+			multipartEntityBuilder.addPart("imgfile",new InputStreamBody(is, "image/jpeg"));
+			multipartEntityBuilder.setContentType(ContentType.MULTIPART_FORM_DATA);
+
+			httpPost.setEntity(multipartEntityBuilder.build());
+			ret = execute(client,httpPost, null, logger);
+		} catch (Exception e) {
+			e.printStackTrace();
+		}
+
+		return ret;
 	}
 
 	/**
