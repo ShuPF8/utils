@@ -16,7 +16,10 @@ import org.apache.http.entity.ContentType;
 import org.apache.http.entity.StringEntity;
 import org.apache.http.entity.mime.MultipartEntityBuilder;
 import org.apache.http.entity.mime.content.InputStreamBody;
+import org.apache.http.impl.client.CloseableHttpClient;
 import org.apache.http.impl.client.HttpClientBuilder;
+import org.apache.http.impl.client.HttpClients;
+import org.apache.http.impl.client.LaxRedirectStrategy;
 import org.apache.http.impl.conn.PoolingHttpClientConnectionManager;
 import org.apache.http.message.BasicNameValuePair;
 import org.apache.http.ssl.SSLContextBuilder;
@@ -286,4 +289,17 @@ public abstract class HttpUtil {
 		httpPost.setEntity(formEntity);
 		return httpPost;
 	}
+
+	public static CloseableHttpClient getClient() {
+		HttpClientBuilder build = HttpClients.custom();
+
+		build .setDefaultRequestConfig(config).setConnectionManager(connManager) //
+				// 对Cookie中过期时间（expires）格式进行转换
+				//.setDefaultCookieSpecRegistry(cookieSpecProviderRegistry)
+				// 关闭自动默认方式处理的重定向，改而利用 LaxRedirectStrategy 进行处理 POST 重定向逻辑
+				.disableAutomaticRetries().setRedirectStrategy(new LaxRedirectStrategy()).build();
+
+		return build.build();
+	}
+
 }
