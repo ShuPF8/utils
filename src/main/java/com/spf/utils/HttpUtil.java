@@ -1,6 +1,7 @@
 package com.spf.utils;
 
 import org.apache.http.*;
+import org.apache.http.client.CookieStore;
 import org.apache.http.client.HttpClient;
 import org.apache.http.client.config.RequestConfig;
 import org.apache.http.client.entity.UrlEncodedFormEntity;
@@ -31,7 +32,6 @@ import javax.imageio.ImageIO;
 import java.awt.image.BufferedImage;
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
-import java.io.IOException;
 import java.io.InputStream;
 import java.net.URL;
 import java.util.ArrayList;
@@ -297,6 +297,19 @@ public abstract class HttpUtil {
 				// 对Cookie中过期时间（expires）格式进行转换
 				//.setDefaultCookieSpecRegistry(cookieSpecProviderRegistry)
 				// 关闭自动默认方式处理的重定向，改而利用 LaxRedirectStrategy 进行处理 POST 重定向逻辑
+				.disableAutomaticRetries().setRedirectStrategy(new LaxRedirectStrategy()).build();
+
+		return build.build();
+	}
+
+	public static CloseableHttpClient getClient(CookieStore cookieStore) {
+		HttpClientBuilder build = HttpClients.custom();
+
+		build.setDefaultRequestConfig(config).setConnectionManager(connManager) //
+				// 对Cookie中过期时间（expires）格式进行转换
+				//.setDefaultCookieSpecRegistry(cookieSpecProviderRegistry)
+				// 关闭自动默认方式处理的重定向，改而利用 LaxRedirectStrategy 进行处理 POST 重定向逻辑
+				.setDefaultCookieStore(cookieStore)
 				.disableAutomaticRetries().setRedirectStrategy(new LaxRedirectStrategy()).build();
 
 		return build.build();
