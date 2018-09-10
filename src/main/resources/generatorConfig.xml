@@ -1,0 +1,40 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE generatorConfiguration>
+<generatorConfiguration>
+    <context id="context1">
+        <property name="javaFileEncoding" value="UTF-8" />
+        <plugin type="org.mybatis.generator.plugins.SerializablePlugin">
+            <property name="suppressJavaInterface" value="false"></property>
+        </plugin>
+        <commentGenerator
+                type="org.mybatis.generator.internal.CustomeCommentGenerator">
+            <property name="suppressAllComments" value="true"></property>
+        </commentGenerator>
+
+        <!-- 数据库链接 -->
+        <jdbcConnection driverClass="com.mysql.jdbc.Driver"
+                        connectionURL="jdbc:mysql://47.96.162.12:3306/drop_shipping" userId="cqdev"
+                        password="cqdev"></jdbcConnection>
+
+        <!-- 实体包路径 -->
+        <javaModelGenerator targetPackage="com.stargoto.nationwide.domain"
+                            targetProject="src\main\java"></javaModelGenerator>
+
+        <!-- 映射文件包路径 -->
+        <sqlMapGenerator targetPackage="com.stargoto.nationwide.mapper"
+                         targetProject="src\main\java"></sqlMapGenerator>
+
+        <!-- Mapper包路径 -->
+        <javaClientGenerator targetPackage="com.stargoto.nationwide.dao"
+                             targetProject="src\main\java" type="XMLMAPPER"></javaClientGenerator>
+
+        <!-- 表配置 -->
+        <table schema="drop_shipping" tableName="stat_shop_order_day" enableCountByExample="false" enableDeleteByExample="false" enableSelectByExample="false" alias="t1" enableUpdateByExample="false" domainObjectName="StatShopOrderDay" modelType="flat">
+            <generatedKey column="id" sqlStatement="JDBC"/>
+            <property name="constructorBased" value="true"></property>
+            <property name="ignoreQualifiersAtRuntime" value="false"></property>
+            <property name="immutable" value="false"></property>
+            <property name="modelOnly" value="false"></property>
+        </table>
+    </context>
+</generatorConfiguration>
