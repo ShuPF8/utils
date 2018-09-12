@@ -33,7 +33,7 @@ public class MailSend {
          * @return
          * @throws Exception
          */
-        public static MimeMessage sendMail(String title, String text) throws Exception {
+        public static MimeMessage sendMail(String title, String text, String[] toMails) throws Exception {
             Session session = init();
 
             // 1. 创建一封邮件
@@ -43,7 +43,11 @@ public class MailSend {
             message.setFrom(new InternetAddress(myEmailAccount, title, "UTF-8"));
 
             // 3. To: 收件人（可以增加多个收件人、抄送、密送）
-            message.setRecipient(MimeMessage.RecipientType.TO, new InternetAddress(receiveMailAccount, "spf", "UTF-8"));
+            InternetAddress[] sendTo = new InternetAddress[toMails.length];
+            for (int i = 0; i < toMails.length; i++) {
+                sendTo[i] = new InternetAddress(toMails[i]);
+            }
+            message.setRecipients(MimeMessage.RecipientType.TO, sendTo);
 
             // 4. Subject: 邮件主题（标题有广告嫌疑，避免被邮件服务器误认为是滥发广告以至返回失败，请修改标题）
             message.setSubject(title, "UTF-8");
