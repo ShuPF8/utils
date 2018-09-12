@@ -1,6 +1,8 @@
 package com.spf.utils.mail;
 
 
+import org.junit.Test;
+
 import javax.mail.Session;
 import javax.mail.Transport;
 import javax.mail.internet.InternetAddress;
@@ -33,7 +35,7 @@ public class MailSend {
          * @return
          * @throws Exception
          */
-        public static MimeMessage sendMail(String title, String text, String[] toMails) throws Exception {
+        public static MimeMessage sendMail(String title, String subject, String text, String[] toMails) throws Exception {
             Session session = init();
 
             // 1. 创建一封邮件
@@ -50,7 +52,7 @@ public class MailSend {
             message.setRecipients(MimeMessage.RecipientType.TO, sendTo);
 
             // 4. Subject: 邮件主题（标题有广告嫌疑，避免被邮件服务器误认为是滥发广告以至返回失败，请修改标题）
-            message.setSubject(title, "UTF-8");
+            message.setSubject(subject, "UTF-8");
 
             // 5. Content: 邮件正文（可以使用html标签）（内容有广告嫌疑，避免被邮件服务器误认为是滥发广告以至返回失败，请修改发送内容）
             message.setContent(text, "text/html;charset=UTF-8");
