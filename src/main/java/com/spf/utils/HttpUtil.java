@@ -51,8 +51,8 @@ public abstract class HttpUtil {
 	static {
 		config = RequestConfig.custom() //
 				// .setProxy(new HttpHost(ip, port)) //
-				.setSocketTimeout(30000) // 数据传输过程中数据包之间间隔的最大时间
-				.setConnectTimeout(10000) // 连接建立时间，三次握手完成时间
+				.setSocketTimeout(40000) // 数据传输过程中数据包之间间隔的最大时间
+				.setConnectTimeout(30000) // 连接建立时间，三次握手完成时间
 				.setConnectionRequestTimeout(15000).build(); // 指从连接池获取连接的超时时间
 
 		SSLContextBuilder sslContextBuilder = new SSLContextBuilder();
